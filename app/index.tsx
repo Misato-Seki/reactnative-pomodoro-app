@@ -8,26 +8,54 @@ export default function index() {
   const [sessionCount, setSessionCount] = useState<number>(0);
   const [currentPhase, setCurrentPhase] = useState<
     "Flow" | "ShortBreak" | "LongBreak"
-  >("Flow");
+  >("ShortBreak");
   const [timerCount, setTimerCount] = useState<number>(0);
   const [timerInterval, setTimerInterval] = useState<NodeJS.Timer | null>(null);
 
   // useEffectは、第一引数にcallbackを入れて、第二引数に依存する値の配列を入れる
   // 依存する値が変更される度にcallbackが実行される
   useEffect(() => {
-    if (timerCount === 0) {
-      if (currentPhase === "Flow" && sessionCount > 0) {
-        setCurrentPhase("ShortBreak");
-        setTimerCount(shortBreakDuration * 60 * 1000);
+    console.log(timerCount);
+    console.log('Session Count: ' + sessionCount);
+    console.log('Current Phase: ' + currentPhase);
+  }, [timerCount]);
+
+  useEffect(() => {
+    switch (currentPhase) {
+      case "Flow":
+        setTimerCount(flowDuration * 1000);
+        break;
+      case "ShortBreak":
+        setTimerCount(shortBreakDuration * 1000);
+        break;
+      case "LongBreak":
+        setTimerCount(longBreakDuration * 1000);
+        break;
+    }
+  }, [currentPhase, flowDuration, shortBreakDuration, longBreakDuration]);
+
+  useEffect(() => {
+    if (currentPhase === "Flow") {
+      if (timerCount === 0 && sessionCount !== 1) {
         setSessionCount((prev) => prev - 1);
-      } else if (currentPhase === "Flow" && sessionCount === 0) {
+        setCurrentPhase("ShortBreak");
+      } else if (timerCount === 0 && sessionCount === 1) {
         setCurrentPhase("LongBreak");
-        setTimerCount(longBreakDuration  * 60 * 1000);
-      } else if (currentPhase === "ShortBreak") {
-        setCurrentPhase("Flow");
-        setTimerCount(flowDuration  * 60 * 1000);
       }
     }
+    if (currentPhase === "ShortBreak" && timerCount === 0) {
+      setCurrentPhase("Flow");
+    }
+    // if (timerCount === 0) {
+    //   if (currentPhase === "Flow" && sessionCount > 1) {
+    //     setCurrentPhase("ShortBreak");
+    //     setSessionCount((prev) => prev - 1);
+    //   } else if (currentPhase === "Flow" && sessionCount === 1) {
+    //     setCurrentPhase("LongBreak");
+    //   } else if (currentPhase === "ShortBreak") {
+    //     setCurrentPhase("Flow");
+    //   }
+    // }
   }, [timerCount]);
 
   // Start Timer
@@ -35,7 +63,7 @@ export default function index() {
     // setInterval
     // Repeatedly calls a function or executes a code snippet, with a fixed time delay between each call.
     const intervalId = setInterval(() => {
-      setTimerCount((prev) => prev - 1000);
+      setTimerCount((prev) => Math.max(prev - 1000, 0));
     }, 1000);
     setTimerInterval(intervalId);
   };
@@ -52,34 +80,37 @@ export default function index() {
       <Text>Flow Duration</Text>
       <TextInput
         style={styles.input}
-        onChangeText={setFlowDuration}
+        onChangeText={(value) => setFlowDuration(Number(value))}
         value={flowDuration !== null ? flowDuration.toString() : ""}
         keyboardType="numeric"
       />
       <Text>ShortBreak Duration</Text>
       <TextInput
         style={styles.input}
-        onChangeText={setShortBreakDuration}
-        value={flowDuration !== null ? shortBreakDuration.toString() : ""}
+        onChangeText={(value) => setShortBreakDuration(Number(value))}
+        value={shortBreakDuration !== null ? shortBreakDuration.toString() : ""}
         keyboardType="numeric"
       />
       <Text>LongBreak Duration</Text>
       <TextInput
         style={styles.input}
-        onChangeText={setLongBreakDuration}
-        value={flowDuration !== null ? longBreakDuration.toString() : ""}
+        onChangeText={(value) => setLongBreakDuration(Number(value))}
+        value={longBreakDuration !== null ? longBreakDuration.toString() : ""}
         keyboardType="numeric"
       />
       <Text>Session Count</Text>
       <TextInput
         style={styles.input}
-        onChangeText={setSessionCount}
-        value={flowDuration !== null ? sessionCount.toString() : ""}
+        onChangeText={(value) => setSessionCount(Number(value))}
+        value={sessionCount !== null ? sessionCount.toString() : ""}
         keyboardType="numeric"
       />
       <Button title="START" onPress={startTimer} />
       <Button title="STOP" onPress={stopTimer} />
-      <Text>{timerDate.getMinutes().toString().padStart(2, "0")}:{timerDate.getSeconds().toString().padStart(2, "0")}</Text>
+      <Text>
+        {timerDate.getMinutes().toString().padStart(2, "0")}:
+        {timerDate.getSeconds().toString().padStart(2, "0")}
+      </Text>
     </View>
   );
 }
