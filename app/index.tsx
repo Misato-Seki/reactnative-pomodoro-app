@@ -1,23 +1,31 @@
-import { StyleSheet, Text, View, TextInput, Button } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 import React, { useEffect, useState } from "react";
+import { AntDesign } from "@expo/vector-icons";
 
 export default function index() {
-  const [flowDuration, setFlowDuration] = useState<number>(0);
-  const [shortBreakDuration, setShortBreakDuration] = useState<number>(0);
-  const [longBreakDuration, setLongBreakDuration] = useState<number>(0);
-  const [sessionCount, setSessionCount] = useState<number>(0);
+  const [flowDuration, setFlowDuration] = useState<number>(30);
+  const [shortBreakDuration, setShortBreakDuration] = useState<number>(5);
+  const [longBreakDuration, setLongBreakDuration] = useState<number>(20);
+  const [sessionCount, setSessionCount] = useState<number>(3);
   const [currentPhase, setCurrentPhase] = useState<
     "Flow" | "ShortBreak" | "LongBreak"
   >("ShortBreak");
   const [timerCount, setTimerCount] = useState<number>(0);
   const [timerInterval, setTimerInterval] = useState<NodeJS.Timer | null>(null);
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
 
   // useEffectは、第一引数にcallbackを入れて、第二引数に依存する値の配列を入れる
   // 依存する値が変更される度にcallbackが実行される
   useEffect(() => {
     console.log(timerCount);
-    console.log('Session Count: ' + sessionCount);
-    console.log('Current Phase: ' + currentPhase);
+    console.log("Session Count: " + sessionCount);
+    console.log("Current Phase: " + currentPhase);
   }, [timerCount]);
 
   useEffect(() => {
@@ -46,16 +54,11 @@ export default function index() {
     if (currentPhase === "ShortBreak" && timerCount === 0) {
       setCurrentPhase("Flow");
     }
-    // if (timerCount === 0) {
-    //   if (currentPhase === "Flow" && sessionCount > 1) {
-    //     setCurrentPhase("ShortBreak");
-    //     setSessionCount((prev) => prev - 1);
-    //   } else if (currentPhase === "Flow" && sessionCount === 1) {
-    //     setCurrentPhase("LongBreak");
-    //   } else if (currentPhase === "ShortBreak") {
-    //     setCurrentPhase("Flow");
-    //   }
-    // }
+    if (currentPhase === "LongBreak" && timerCount === 0) {
+      setCurrentPhase("Flow");
+      setSessionCount(3);
+      stopTimer();
+    }
   }, [timerCount]);
 
   // Start Timer
@@ -66,61 +69,117 @@ export default function index() {
       setTimerCount((prev) => Math.max(prev - 1000, 0));
     }, 1000);
     setTimerInterval(intervalId);
+    setIsTimerRunning(true);
   };
 
   // Stop Tomer
   const stopTimer = () => {
     clearInterval(timerInterval);
+    setIsTimerRunning(false);
   };
 
   const timerDate = new Date(timerCount);
 
   return (
-    <View>
-      <Text>Flow Duration</Text>
-      <TextInput
-        style={styles.input}
-        onChangeText={(value) => setFlowDuration(Number(value))}
-        value={flowDuration !== null ? flowDuration.toString() : ""}
-        keyboardType="numeric"
-      />
-      <Text>ShortBreak Duration</Text>
-      <TextInput
-        style={styles.input}
-        onChangeText={(value) => setShortBreakDuration(Number(value))}
-        value={shortBreakDuration !== null ? shortBreakDuration.toString() : ""}
-        keyboardType="numeric"
-      />
-      <Text>LongBreak Duration</Text>
-      <TextInput
-        style={styles.input}
-        onChangeText={(value) => setLongBreakDuration(Number(value))}
-        value={longBreakDuration !== null ? longBreakDuration.toString() : ""}
-        keyboardType="numeric"
-      />
-      <Text>Session Count</Text>
-      <TextInput
-        style={styles.input}
-        onChangeText={(value) => setSessionCount(Number(value))}
-        value={sessionCount !== null ? sessionCount.toString() : ""}
-        keyboardType="numeric"
-      />
-      <Button title="START" onPress={startTimer} />
-      <Button title="STOP" onPress={stopTimer} />
-      <Text>
-        {timerDate.getMinutes().toString().padStart(2, "0")}:
-        {timerDate.getSeconds().toString().padStart(2, "0")}
-      </Text>
+    <View style={{...styles.container, ...{backgroundColor: currentPhase === 'Flow' ? '#FF5F5D' : '#00CCBF'}}}>
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputText}>Flow Duration</Text>
+        <TextInput
+          style={styles.input}
+          onChangeText={(value) => setFlowDuration(Number(value))}
+          value={flowDuration !== null ? flowDuration.toString() : ""}
+          keyboardType="numeric"
+          placeholderTextColor="#fff"
+        />
+        <Text style={styles.inputText}>min</Text>
+      </View>
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputText}>ShortBreak Duration</Text>
+        <TextInput
+          style={styles.input}
+          onChangeText={(value) => setShortBreakDuration(Number(value))}
+          value={
+            shortBreakDuration !== null ? shortBreakDuration.toString() : ""
+          }
+          keyboardType="numeric"
+        />
+        <Text style={styles.inputText}>min</Text>
+      </View>
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputText}>LongBreak Duration</Text>
+        <TextInput
+          style={styles.input}
+          onChangeText={(value) => setLongBreakDuration(Number(value))}
+          value={longBreakDuration !== null ? longBreakDuration.toString() : ""}
+          keyboardType="numeric"
+        />
+        <Text style={styles.inputText}>min</Text>
+      </View>
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputText}>Session Count</Text>
+        <TextInput
+          style={styles.input}
+          onChangeText={(value) => setSessionCount(Number(value))}
+          value={sessionCount !== null ? sessionCount.toString() : ""}
+          keyboardType="numeric"
+        />
+        <Text style={styles.inputText}>times</Text>
+      </View>
+      <View style={styles.timerDisplay}>
+        <Text style={styles.currentPhase}>{currentPhase}</Text>
+        <TouchableOpacity onPress={isTimerRunning ? stopTimer : startTimer}>
+          <AntDesign
+            name={isTimerRunning ? "pausecircle" : "play"}
+            size={80}
+            color="white"
+          />
+        </TouchableOpacity>
+        <Text style={styles.timer}>
+          {timerDate.getMinutes().toString().padStart(2, "0")}:
+          {timerDate.getSeconds().toString().padStart(2, "0")}
+        </Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FF5F5D',
+  },
+  inputContainer: {
+    flexDirection: "row",
+    justifyContent: 'center',
+    alignItems: "center",
+  },
+  inputText: {
+    color: '#fff',
+  },
   input: {
     height: 40,
     margin: 12,
     borderWidth: 1,
     padding: 10,
+    borderRadius: 10,
+    borderColor: '#fff',
+  },
+  timerDisplay: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  currentPhase: {
+    fontSize: 40,
+    fontWeight: "800",
+    color: "#fff",
+    marginBottom: 10,
+  },
+  timer: {
+    fontSize: 40,
+    fontWeight: "800",
+    color: "#fff",
+    marginTop: 10,
   },
 });
 
