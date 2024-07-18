@@ -7,6 +7,8 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { AntDesign } from "@expo/vector-icons";
+import { Audio } from "expo-av";
+import { InputField } from "./InpuField";
 
 export default function index() {
   const [flowDuration, setFlowDuration] = useState<number>(30);
@@ -19,15 +21,19 @@ export default function index() {
   const [timerCount, setTimerCount] = useState<number>(0);
   const [timerInterval, setTimerInterval] = useState<NodeJS.Timer | null>(null);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
 
   // useEffectは、第一引数にcallbackを入れて、第二引数に依存する値の配列を入れる
   // 依存する値が変更される度にcallbackが実行される
   useEffect(() => {
-    console.log(timerCount);
     console.log("Session Count: " + sessionCount);
-    console.log("Current Phase: " + currentPhase);
-  }, [timerCount]);
+  }, [sessionCount]);
 
+  useEffect(() => {
+    console.log("Current Phase: " + currentPhase);
+  }, [currentPhase]);
+
+  //Handle TimerCount
   useEffect(() => {
     switch (currentPhase) {
       case "Flow":
@@ -42,9 +48,13 @@ export default function index() {
     }
   }, [currentPhase, flowDuration, shortBreakDuration, longBreakDuration]);
 
+  //Handle Phase
   useEffect(() => {
+    console.log("Timer Count: " + timerCount);
+
     if (currentPhase === "Flow") {
       if (timerCount === 0 && sessionCount !== 1) {
+        playSound();
         setSessionCount((prev) => prev - 1);
         setCurrentPhase("ShortBreak");
       } else if (timerCount === 0 && sessionCount === 1) {
@@ -52,9 +62,11 @@ export default function index() {
       }
     }
     if (currentPhase === "ShortBreak" && timerCount === 0) {
+      playSound();
       setCurrentPhase("Flow");
     }
     if (currentPhase === "LongBreak" && timerCount === 0) {
+      playSound();
       setCurrentPhase("Flow");
       setSessionCount(3);
       stopTimer();
@@ -78,53 +90,50 @@ export default function index() {
     setIsTimerRunning(false);
   };
 
+  // Play Alarm Sound
+  const playSound = async () => {
+    const { sound } = await Audio.Sound.createAsync(
+      require("../assets/sound/alarm.mp3")
+    );
+    setSound(sound);
+
+    console.log("Playing Sound");
+    await sound.playAsync();
+  };
+
   const timerDate = new Date(timerCount);
 
   return (
-    <View style={{...styles.container, ...{backgroundColor: currentPhase === 'Flow' ? '#FF5F5D' : '#00CCBF'}}}>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputText}>Flow Duration</Text>
-        <TextInput
-          style={styles.input}
-          onChangeText={(value) => setFlowDuration(Number(value))}
-          value={flowDuration !== null ? flowDuration.toString() : ""}
-          keyboardType="numeric"
-          placeholderTextColor="#fff"
-        />
-        <Text style={styles.inputText}>min</Text>
-      </View>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputText}>ShortBreak Duration</Text>
-        <TextInput
-          style={styles.input}
-          onChangeText={(value) => setShortBreakDuration(Number(value))}
-          value={
-            shortBreakDuration !== null ? shortBreakDuration.toString() : ""
-          }
-          keyboardType="numeric"
-        />
-        <Text style={styles.inputText}>min</Text>
-      </View>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputText}>LongBreak Duration</Text>
-        <TextInput
-          style={styles.input}
-          onChangeText={(value) => setLongBreakDuration(Number(value))}
-          value={longBreakDuration !== null ? longBreakDuration.toString() : ""}
-          keyboardType="numeric"
-        />
-        <Text style={styles.inputText}>min</Text>
-      </View>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputText}>Session Count</Text>
-        <TextInput
-          style={styles.input}
-          onChangeText={(value) => setSessionCount(Number(value))}
-          value={sessionCount !== null ? sessionCount.toString() : ""}
-          keyboardType="numeric"
-        />
-        <Text style={styles.inputText}>times</Text>
-      </View>
+    <View
+      style={{
+        ...styles.container,
+        ...{ backgroundColor: currentPhase === "Flow" ? "#FF5F5D" : "#00CCBF" },
+      }}
+    >
+      <InputField
+        label="Flow Duration"
+        setValue={setFlowDuration}
+        value={flowDuration}
+        unit="min"
+      />
+      <InputField
+        label="ShortBreak Duration"
+        setValue={setShortBreakDuration}
+        value={shortBreakDuration}
+        unit="min"
+      />
+      <InputField
+        label="LongBreak Duration"
+        setValue={setLongBreakDuration}
+        value={longBreakDuration}
+        unit="min"
+      />
+      <InputField
+        label="Session Count"
+        setValue={setSessionCount}
+        value={sessionCount}
+        unit="times"
+      />
       <View style={styles.timerDisplay}>
         <Text style={styles.currentPhase}>{currentPhase}</Text>
         <TouchableOpacity onPress={isTimerRunning ? stopTimer : startTimer}>
@@ -146,23 +155,7 @@ export default function index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FF5F5D',
-  },
-  inputContainer: {
-    flexDirection: "row",
-    justifyContent: 'center',
-    alignItems: "center",
-  },
-  inputText: {
-    color: '#fff',
-  },
-  input: {
-    height: 40,
-    margin: 12,
-    borderWidth: 1,
-    padding: 10,
-    borderRadius: 10,
-    borderColor: '#fff',
+    backgroundColor: "#FF5F5D",
   },
   timerDisplay: {
     justifyContent: "center",
