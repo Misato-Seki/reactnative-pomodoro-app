@@ -1,14 +1,8 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  TextInput,
-  TouchableOpacity,
-} from "react-native";
+import { StyleSheet, View } from "react-native";
 import React, { useEffect, useState } from "react";
-import { AntDesign } from "@expo/vector-icons";
 import { Audio } from "expo-av";
 import { InputField } from "./InpuField";
+import { TimerDisplay } from "./TimerDisplay";
 
 export default function index() {
   const [flowDuration, setFlowDuration] = useState<number>(30);
@@ -134,20 +128,13 @@ export default function index() {
         value={sessionCount}
         unit="times"
       />
-      <View style={styles.timerDisplay}>
-        <Text style={styles.currentPhase}>{currentPhase}</Text>
-        <TouchableOpacity onPress={isTimerRunning ? stopTimer : startTimer}>
-          <AntDesign
-            name={isTimerRunning ? "pausecircle" : "play"}
-            size={80}
-            color="white"
-          />
-        </TouchableOpacity>
-        <Text style={styles.timer}>
-          {timerDate.getMinutes().toString().padStart(2, "0")}:
-          {timerDate.getSeconds().toString().padStart(2, "0")}
-        </Text>
-      </View>
+      <TimerDisplay
+        currentPhase={currentPhase}
+        isTimerRunning={isTimerRunning}
+        stopTimer={stopTimer}
+        startTimer={startTimer}
+        timerDate={timerDate}
+      />
     </View>
   );
 }
@@ -156,24 +143,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FF5F5D",
-  },
-  timerDisplay: {
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 20,
-  },
-  currentPhase: {
-    fontSize: 40,
-    fontWeight: "800",
-    color: "#fff",
-    marginBottom: 10,
-  },
-  timer: {
-    fontSize: 40,
-    fontWeight: "800",
-    color: "#fff",
-    marginTop: 10,
-  },
+  }
 });
 
 // import { StatusBar } from "expo-status-bar";

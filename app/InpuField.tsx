@@ -22,7 +22,7 @@ export const InputField: React.FC<Props> = ({
           style={styles.input}
           onChangeText={(value) => setValue(Number(value))}
           value={value !== null ? value.toString() : ""}
-          keyboardType="numeric"
+          inputMode="numeric"
         />
         <Text style={styles.inputText}>{unit}</Text>
       </View>
