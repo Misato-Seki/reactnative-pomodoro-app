@@ -3,8 +3,8 @@ import React from "react";
 
 type Props = {
   label: string;
-  setValue: () => void;
-  value: () => void;
+  setValue: (value: number) => void;
+  value: number;
   unit: string;
 };
 
